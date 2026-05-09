@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavioral Anti-Debt Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; /* Light slate background */
+        }
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(6px);
+        }
+        /* Refined Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f8fafc; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Remove default number input arrows for cleaner look */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col relative pb-20">
+
+    <!-- Professional Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-md shadow-indigo-200">
+                    <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">Anti-Debt Intelligence</h1>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Financial Command Center</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="flex h-3 w-3 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" title="System Active"></span>
+                </span>
+                <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Risk Detection Banner -->
+        <div id="riskContainer" style="display: none;" class="bg-rose-50 border border-rose-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-500"></div>
+            <div class="flex items-start gap-3 pl-2">
+                <i class="fas fa-exclamation-circle text-rose-500 mt-0.5 text-lg"></i>
+                <div>
+                    <h3 class="text-sm font-bold text-rose-900 uppercase tracking-wider mb-1">Risk Factors Detected</h3>
+                    <ul id="riskList" class="list-disc pl-5 text-sm text-rose-700 font-medium space-y-0.5">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Ribbon -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            
+            <!-- Hero Score Card -->
+            <div class="col-span-2 bg-gradient-to-br from-indigo-900 via-slate-800 to-slate-900 rounded-xl shadow-md p-5 flex flex-col justify-between relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 opacity-10 transform group-hover:scale-110 transition-transform duration-500">
+                    <i class="fas fa-shield-alt text-9xl text-white"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mb-1 relative z-10">Debt Health Score</p>
+                    <div class="flex items-end gap-3 relative z-10">
+                        <p class="text-5xl font-black text-white tracking-tight" id="dashScore">0</p>
+                        <p class="text-xs font-bold tracking-wider mb-1.5 px-2 py-0.5 rounded shadow-sm bg-white/10 backdrop-blur-sm" id="dashScoreStatus">-</p>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-5 overflow-hidden relative z-10">
+                    <div id="scoreProgressBar" class="h-full bg-emerald-400 w-0 transition-all duration-1000"></div>
+                </div>
+            </div>
+
+            <!-- Free Cashflow -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-center transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Free Cashflow</p>
+                    <div class="w-6 h-6 rounded bg-emerald-50 text-emerald-500 flex items-center justify-center"><i class="fas fa-wallet text-xs"></i></div>
+                </div>
+                <p class="text-2xl font-bold text-slate-800" id="dashCashflow">₹0</p>
+            </div>
+
+            <!-- EMI Load -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-center transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">EMI Load</p>
+                    <div class="w-6 h-6 rounded bg-rose-50 text-rose-500 flex items-center justify-center"><i class="fas fa-file-invoice-dollar text-xs"></i></div>
+                </div>
+                <p class="text-2xl font-bold text-rose-600" id="dashEmi">₹0</p>
+            </div>
+
+            <!-- Debt Ratio -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-center transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Debt Ratio</p>
+                    <div class="w-6 h-6 rounded bg-amber-50 text-amber-500 flex items-center justify-center"><i class="fas fa-balance-scale-left text-xs"></i></div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-2xl font-bold text-slate-800" id="dashRatio">0%</p>
+                    <p class="text-[10px] font-bold uppercase tracking-wider" id="dashRatioStatus">-</p>
+                </div>
+            </div>
+
+            <!-- Resilience -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-center transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Resilience</p>
+                    <div class="w-6 h-6 rounded bg-sky-50 text-sky-500 flex items-center justify-center"><i class="fas fa-life-ring text-xs"></i></div>
+                </div>
+                <p class="text-xl font-bold text-sky-600"><span id="dashEmergency">0</span> <span class="text-sm text-slate-500 font-medium">Months</span></p>
+                <p class="text-[10px] font-semibold mt-1 text-slate-400 uppercase tracking-wider" title="Lost wealth at 12% ROI">Opp Cost: <span id="dashOpp" class="text-slate-600">₹0</span></p>
+            </div>
+
+        </div>
+
+        <!-- Content Grid (2/3 Table, 1/3 Inputs) -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Active Portfolio Table -->
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-list text-slate-400"></i>
+                        <h3 class="text-base font-bold text-slate-800">Active Credit Portfolio</h3>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white text-slate-400 text-[10px] uppercase tracking-wider font-bold border-b border-slate-200">
+                                <th class="px-6 py-3">Principal Value</th>
+                                <th class="px-4 py-3">Start Date</th>
+                                <th class="px-4 py-3">Monthly EMI</th>
+                                <th class="px-4 py-3">Tenure</th>
+                                <th class="px-4 py-3">Total Cost</th>
+                                <th class="px-4 py-3">Cost Premium</th>
+                                <th class="px-6 py-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loanTableBody" class="text-sm divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cashflow Baseline Configurator -->
+            <div class="w-full lg:w-80 bg-white rounded-xl shadow-sm border border-slate-200 p-6 self-start">
+                <div class="flex items-center gap-2 mb-6">
+                    <i class="fas fa-sliders-h text-indigo-500"></i>
+                    <h2 class="text-base font-bold text-slate-800">Cashflow Baseline</h2>
+                </div>
+                
+                <div class="space-y-5">
+                    <!-- Income -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Monthly Income</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-slate-400 font-bold">₹</span>
+                            <input type="number" id="monthlyIncome" value="100000" class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-semibold text-slate-800" oninput="calculateDash()">
+                        </div>
+                    </div>
+                    
+                    <!-- Fixed Expenses -->
+                    <div>
+                        <div class="flex justify-between items-end mb-1.5">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Fixed Expenses</label>
+                            <button onclick="openExpModal()" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded transition-colors">
+                                <i class="fas fa-list-ul"></i> Itemize
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-slate-400 font-bold">₹</span>
+                            <input type="number" id="fixedExpenses" value="40000" class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-semibold text-slate-800" oninput="handleManualFixedExp()">
+                        </div>
+                    </div>
+                    
+                    <!-- Calculated Savings -->
+                    <div class="pt-3 border-t border-slate-100">
+                        <label class="block text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                            <i class="fas fa-lock text-[10px]"></i> Calculated Savings
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-indigo-400 font-bold">₹</span>
+                            <input type="number" id="savings" class="w-full pl-8 pr-4 py-2.5 bg-indigo-50/50 border border-indigo-100 rounded-lg outline-none font-bold text-indigo-700 cursor-not-allowed" readonly title="Income - Fixed Expenses">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button onclick="openModal()" class="fixed bottom-8 right-8 bg-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all duration-200 z-40 group border-2 border-white">
+        <i class="fas fa-plus text-xl group-hover:rotate-90 transition-transform duration-300"></i>
+    </button>
+
+    <!-- Modal Overlay: Add Loan -->
+    <div id="addLoanModal" class="fixed inset-0 glass-modal z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 border border-slate-200" id="modalContent">
+            
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <div class="bg-white p-1.5 rounded shadow-sm text-indigo-600"><i class="fas fa-plus text-sm"></i></div>
+                    Add Credit Item
+                </h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Product Value (₹)</label>
+                        <input type="number" id="loanValue" placeholder="e.g. 500000" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">EMI Start Date</label>
+                        <input type="date" id="loanStartDate" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium text-slate-700">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Monthly EMI (₹)</label>
+                        <input type="number" id="loanEmi" placeholder="15000" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tenure (Months)</label>
+                        <input type="number" id="loanTenure" placeholder="48" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-5 border-t border-slate-100 pt-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Down Payment (₹)</label>
+                        <input type="number" id="loanDown" value="0" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Late Fees (₹)</label>
+                        <input type="number" id="loanLate" value="0" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-medium">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
+                <button onclick="addLoan()" class="flex-1 py-2.5 px-4 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">Save to Portfolio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Overlay: Itemize Fixed Expenses -->
+    <div id="itemizeExpModal" class="fixed inset-0 glass-modal z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 border border-slate-200" id="expModalContent">
+            
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800">Itemize Expenses</h2>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Calculate monthly outflow</p>
+                </div>
+                <button onclick="closeExpModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="flex gap-2">
+                    <input type="text" id="expName" placeholder="e.g. Rent" class="flex-1 p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm font-medium transition-all">
+                    <input type="number" id="expAmount" placeholder="₹ Amount" class="w-28 p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm font-medium transition-all">
+                    <button onclick="addExpenseItem()" class="bg-slate-800 text-white px-4 rounded-lg hover:bg-slate-900 transition-colors shadow-sm"><i class="fas fa-plus"></i></button>
+                </div>
+
+                <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-lg bg-slate-50/50 shadow-inner">
+                    <ul id="expenseListUI" class="divide-y divide-slate-200 text-sm">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </div>
+                
+                <div class="flex justify-between items-center pt-2 px-1">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Evaluated:</span>
+                    <span class="text-lg font-black text-slate-800" id="expTotalUI">₹0</span>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
+                <button onclick="applyExpenses()" class="w-full py-2.5 px-4 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">Sync with Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic (Unchanged Core Math) -->
+    <script>
+        let loans = [];
+        let itemizedExpenses = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('loanStartDate').valueAsDate = new Date();
+            calculateDash(); 
+        });
+
+        const modal = document.getElementById('addLoanModal');
+        const modalContent = document.getElementById('modalContent');
+
+        function openModal() {
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            document.getElementById('loanValue').value = '';
+            document.getElementById('loanEmi').value = '';
+            document.getElementById('loanTenure').value = '';
+            document.getElementById('loanDown').value = '0';
+            document.getElementById('loanLate').value = '0';
+            document.getElementById('loanStartDate').valueAsDate = new Date(); 
+        }
+
+        const expModal = document.getElementById('itemizeExpModal');
+        const expModalContent = document.getElementById('expModalContent');
+
+        function openExpModal() {
+            expModal.classList.remove('opacity-0', 'pointer-events-none');
+            expModalContent.classList.remove('scale-95');
+            expModalContent.classList.add('scale-100');
+            renderExpenses();
+        }
+
+        function closeExpModal() {
+            expModal.classList.add('opacity-0', 'pointer-events-none');
+            expModalContent.classList.remove('scale-100');
+            expModalContent.classList.add('scale-95');
+            document.getElementById('expName').value = '';
+            document.getElementById('expAmount').value = '';
+        }
+
+        function addExpenseItem() {
+            const name = document.getElementById('expName').value.trim();
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+            
+            if(name && amount > 0) {
+                itemizedExpenses.push({ id: Date.now(), name, amount });
+                document.getElementById('expName').value = '';
+                document.getElementById('expAmount').value = '';
+                renderExpenses();
+            }
+        }
+
+        function removeExpenseItem(id) {
+            itemizedExpenses = itemizedExpenses.filter(e => e.id !== id);
+            renderExpenses();
+        }
+
+        function renderExpenses() {
+            const listUI = document.getElementById('expenseListUI');
+            listUI.innerHTML = '';
+            
+            let total = 0;
+            if(itemizedExpenses.length === 0) {
+                listUI.innerHTML = `<li class="p-4 text-center text-slate-400 text-xs font-medium">No items added. Build your list above.</li>`;
+            } else {
+                itemizedExpenses.forEach(exp => {
+                    total += exp.amount;
+                    listUI.innerHTML += `
+                        <li class="p-3 px-4 flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
+                            <span class="font-semibold text-slate-700">${exp.name}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-slate-800">₹${exp.amount.toLocaleString()}</span>
+                                <button onclick="removeExpenseItem(${exp.id})" class="text-slate-300 hover:text-rose-500 transition-colors"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+            document.getElementById('expTotalUI').innerText = `₹${total.toLocaleString()}`;
+        }
+
+        function applyExpenses() {
+            if(itemizedExpenses.length > 0) {
+                const total = itemizedExpenses.reduce((sum, item) => sum + item.amount, 0);
+                const fixedInput = document.getElementById('fixedExpenses');
+                fixedInput.value = total;
+                fixedInput.setAttribute('readonly', true);
+                fixedInput.classList.add('bg-indigo-50/50', 'text-indigo-700', 'border-indigo-200');
+            }
+            closeExpModal();
+            calculateDash();
+        }
+
+        function handleManualFixedExp() {
+            itemizedExpenses = [];
+            const fixedInput = document.getElementById('fixedExpenses');
+            fixedInput.removeAttribute('readonly');
+            fixedInput.classList.remove('bg-indigo-50/50', 'text-indigo-700', 'border-indigo-200');
+            calculateDash();
+        }
+        
+        function addLoan() {
+            const value = parseFloat(document.getElementById('loanValue').value) || 0;
+            const emi = parseFloat(document.getElementById('loanEmi').value) || 0;
+            const tenure = parseFloat(document.getElementById('loanTenure').value) || 0;
+            const down = parseFloat(document.getElementById('loanDown').value) || 0;
+            const late = parseFloat(document.getElementById('loanLate').value) || 0;
+            
+            const startDateInput = document.getElementById('loanStartDate').value;
+            const startDateObj = startDateInput ? new Date(startDateInput) : new Date();
+            const formattedDate = startDateObj.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+            
+            if(value === 0 || emi === 0 || tenure === 0) {
+                alert("Please fill in Value, EMI, and Tenure.");
+                return;
+            }
+
+            const totalCost = (emi * tenure) + down + late; 
+            const extraCostPct = value > 0 ? ((totalCost - value) / value) * 100 : 0;
+
+            loans.push({ id: Date.now(), value, emi, tenure, totalCost, extraCostPct, late, startDate: formattedDate });
+            
+            closeModal();
+            renderLoans();
+            calculateDash();
+        }
+
+        function removeLoan(id) {
+            loans = loans.filter(l => l.id !== id);
+            renderLoans();
+            calculateDash();
+        }
+
+        function renderLoans() {
+            const tbody = document.getElementById('loanTableBody');
+            tbody.innerHTML = '';
+            
+            if (loans.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400"><div class="flex flex-col items-center"><i class="fas fa-inbox text-3xl mb-3 text-slate-300"></i><span class="font-medium text-sm">No active credit items.</span></div></td></tr>`;
+                return;
+            }
+
+            loans.forEach(loan => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="px-6 py-4 font-bold text-slate-800">₹${loan.value.toLocaleString()}</td>
+                        <td class="px-4 py-4 text-slate-500 font-medium whitespace-nowrap text-xs"><i class="far fa-calendar-alt mr-1 text-slate-400"></i> ${loan.startDate}</td>
+                        <td class="px-4 py-4 text-rose-600 font-bold">₹${loan.emi.toLocaleString()}</td>
+                        <td class="px-4 py-4 text-slate-600 font-medium">${loan.tenure} mo</td>
+                        <td class="px-4 py-4 font-semibold text-slate-700">₹${loan.totalCost.toLocaleString()}</td>
+                        <td class="px-4 py-4">
+                            <span class="px-2.5 py-1 rounded text-[10px] uppercase tracking-wider font-bold ${loan.extraCostPct > 30 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}">
+                                +${loan.extraCostPct.toFixed(1)}%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="removeLoan(${loan.id})" class="text-slate-300 hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-rose-50 opacity-0 group-hover:opacity-100" title="Remove Item">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function calculateDash() {
+            const income = parseFloat(document.getElementById('monthlyIncome').value) || 0;
+            const fixedExp = parseFloat(document.getElementById('fixedExpenses').value) || 0;
+            
+            let calculatedSavings = income - fixedExp;
+            if (calculatedSavings < 0) calculatedSavings = 0; 
+            
+            document.getElementById('savings').value = calculatedSavings;
+
+            const emiLoad = loans.reduce((sum, loan) => sum + loan.emi, 0);
+            document.getElementById('dashEmi').innerText = `₹${emiLoad.toLocaleString()}`;
+
+            const freeCashflow = income - (fixedExp + emiLoad);
+            const fcEl = document.getElementById('dashCashflow');
+            fcEl.innerText = `₹${freeCashflow.toLocaleString()}`;
+            fcEl.className = `text-2xl font-bold ${freeCashflow < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+
+            const debtRatio = income > 0 ? (emiLoad / income) * 100 : 0;
+            document.getElementById('dashRatio').innerText = `${debtRatio.toFixed(1)}%`;
+            
+            let ratioStatus = "Safe";
+            let ratioColor = "text-emerald-500";
+            if(debtRatio > 50) { ratioStatus = "Critical"; ratioColor = "text-rose-600"; }
+            else if(debtRatio > 30) { ratioStatus = "Risk Zone"; ratioColor = "text-amber-500"; }
+            else if(debtRatio > 15) { ratioStatus = "Moderate"; ratioColor = "text-slate-500"; }
+            
+            const ratioStatEl = document.getElementById('dashRatioStatus');
+            ratioStatEl.innerText = ratioStatus;
+            ratioStatEl.className = `text-[10px] font-bold uppercase tracking-wider ${ratioColor}`;
+
+            const monthlyBurn = fixedExp + emiLoad;
+            const emergencyMonths = monthlyBurn > 0 ? calculatedSavings / monthlyBurn : 0;
+            document.getElementById('dashEmergency').innerText = emergencyMonths.toFixed(1);
+
+            let maxTenure = loans.reduce((max, loan) => loan.tenure > max ? loan.tenure : max, 0);
+            let opportunityCost = 0;
+            if(emiLoad > 0 && maxTenure > 0) {
+                const r = 0.01; 
+                opportunityCost = emiLoad * ((Math.pow(1 + r, maxTenure) - 1) / r);
+            }
+            document.getElementById('dashOpp').innerText = `₹${Math.round(opportunityCost).toLocaleString()}`;
+
+            let score = 0;
+            
+            if(debtRatio < 15) score += 35;
+            else if(debtRatio <= 30) score += 25;
+            else if(debtRatio <= 50) score += 10;
+            
+            if(emergencyMonths >= 1.5) score += 25;
+            else if(emergencyMonths >= 0.5) score += 15;
+            else if(emergencyMonths >= 0.1) score += 5;
+
+            if(loans.length === 0) score += 15;
+            else if(loans.length <= 2) score += 10;
+            
+            const totalLateFees = loans.reduce((sum, loan) => sum + loan.late, 0);
+            if(totalLateFees === 0) score += 15;
+
+            if(freeCashflow > (income * 0.2)) score += 10;
+            else if(freeCashflow > 0) score += 5;
+
+            document.getElementById('dashScore').innerText = score;
+            
+            const progressBar = document.getElementById('scoreProgressBar');
+            progressBar.style.width = `${score}%`;
+
+            let scoreStatus = "";
+            let scoreColor = "";
+            let barColor = "";
+            if(score >= 80) { scoreStatus = "Excellent"; scoreColor = "text-emerald-300"; barColor = "bg-emerald-400"; }
+            else if(score >= 60) { scoreStatus = "Stable"; scoreColor = "text-sky-300"; barColor = "bg-sky-400"; }
+            else if(score >= 40) { scoreStatus = "Warning"; scoreColor = "text-amber-300"; barColor = "bg-amber-400"; }
+            else if(score >= 20) { scoreStatus = "High Risk"; scoreColor = "text-orange-400"; barColor = "bg-orange-500"; }
+            else { scoreStatus = "Debt Trap"; scoreColor = "text-rose-400"; barColor = "bg-rose-500"; }
+
+            progressBar.className = `h-full transition-all duration-1000 ${barColor}`;
+            const scoreStatEl = document.getElementById('dashScoreStatus');
+            scoreStatEl.innerText = scoreStatus;
+            scoreStatEl.className = `text-[10px] font-bold uppercase tracking-wider mb-1.5 px-2 py-0.5 rounded shadow-sm bg-white/10 backdrop-blur-sm ${scoreColor}`;
+
+            const risks = [];
+            if(debtRatio > 40) risks.push("High EMI dependence (Debt Ratio > 40%)");
+            if(freeCashflow < 0) risks.push("Negative monthly survival (Free Cashflow < 0)");
+            if(emergencyMonths < 0.5) risks.push("Low financial resilience (Based on current savings velocity)");
+            if(loans.length >= 3) risks.push("Cashflow congestion (3+ active EMIs)");
+
+            const riskContainer = document.getElementById('riskContainer');
+            const riskList = document.getElementById('riskList');
+            riskList.innerHTML = '';
+            
+            if(risks.length > 0) {
+                riskContainer.style.display = 'block';
+                risks.forEach(risk => {
+                    riskList.innerHTML += `<li>${risk}</li>`;
+                });
+            } else {
+                riskContainer.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
