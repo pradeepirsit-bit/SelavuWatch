@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SelavuWatch | True Cost Credit Ledger</title>
-    <!-- Supabase Library -->
+    <title>SelavuWatch Pro | Debt Transparency</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -15,19 +14,12 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); line-height: 1.5; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); }
         .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
 
-        /* --- AUTH OVERLAY --- */
-        #auth-overlay {
-            position: fixed; inset: 0; background: var(--bg-app); z-index: 2000;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .auth-card { 
-            background: white; padding: 2.5rem; border-radius: 24px; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1); 
-            width: 100%; max-width: 420px; 
-        }
+        /* --- AUTH & UI --- */
+        #auth-overlay { position: fixed; inset: 0; background: var(--bg-app); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: white; padding: 2.5rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .hidden { display: none !important; }
 
         /* --- DASHBOARD --- */
@@ -35,28 +27,27 @@
         .stat-card { background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); }
         .amt { font-size: 1.6rem; font-weight: 800; }
 
-        /* --- CREDIT CARDS --- */
+        /* --- CARDS --- */
         .credit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; }
         .credit-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid var(--border); position: relative; transition: 0.2s; }
-        .credit-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); }
+        .edit-btn { position: absolute; top: 15px; right: 55px; cursor: pointer; background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); transition: 0.2s; }
+        .edit-btn:hover { background: var(--border); }
 
-        /* --- TARGET INSIGHT --- */
+        /* --- TARGET & INTEREST --- */
         .target-trigger { position: absolute; top: 15px; right: 15px; cursor: help; background: #fff7ed; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--warning); font-size: 1.1rem; }
-        .tooltip { position: absolute; top: 55px; right: 15px; background: #1e293b; color: white; padding: 16px; border-radius: 12px; width: 260px; font-size: 0.8rem; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 10; pointer-events: none; }
+        .tooltip { position: absolute; top: 55px; right: 15px; background: #1e293b; color: white; padding: 16px; border-radius: 12px; width: 280px; font-size: 0.8rem; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 10; line-height: 1.4; }
         .target-trigger:hover + .tooltip { opacity: 1; visibility: visible; }
+        .waste-tag { font-size: 0.75rem; font-weight: 700; color: var(--danger); background: #fef2f2; padding: 4px 8px; border-radius: 6px; margin-top: 8px; display: inline-block; }
 
         /* --- MODAL --- */
-        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-active { display: flex; }
-        .modal-content { background: white; width: 95%; max-width: 700px; padding: 2.5rem; border-radius: 28px; max-height: 90vh; overflow-y: auto; }
-
-        /* --- FORMS --- */
+        .modal-content { background: white; width: 95%; max-width: 650px; padding: 2.5rem; border-radius: 28px; max-height: 90vh; overflow-y: auto; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
         .span-2 { grid-column: span 2; }
         input { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 10px; margin-top: 4px; font-size: 1rem; }
-        .btn { cursor: pointer; border: none; font-weight: 700; transition: 0.2s; border-radius: 12px; padding: 1rem; }
+        .btn { cursor: pointer; border: none; font-weight: 700; border-radius: 12px; padding: 1rem; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-primary:hover { background: var(--primary-dark); }
     </style>
 </head>
 <body>
@@ -64,20 +55,13 @@
     <!-- AUTH SECTION -->
     <div id="auth-overlay">
         <div class="auth-card">
-            <h2 id="auth-title" style="text-align: center; margin-bottom: 2rem;">Access SelavuWatch</h2>
+            <h2 id="auth-title" style="text-align: center; margin-bottom: 2rem;">SelavuWatch Login</h2>
             <form id="auth-form">
-                <div style="margin-bottom: 1rem;">
-                    <label style="font-size: 0.8rem; font-weight: 700;">Email</label>
-                    <input type="email" id="auth-email" required>
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="font-size: 0.8rem; font-weight: 700;">Password</label>
-                    <input type="password" id="auth-password" minlength="6" required>
-                </div>
+                <input type="email" id="auth-email" placeholder="Email" style="margin-bottom: 1rem;" required>
+                <input type="password" id="auth-password" placeholder="Password" style="margin-bottom: 1.5rem;" required>
                 <button type="submit" id="auth-submit-btn" class="btn btn-primary">Sign In</button>
             </form>
-            <p style="margin-top: 2rem; text-align: center; font-size: 0.85rem;">
-                <span id="auth-toggle-text">New here?</span> 
+            <p style="margin-top: 1.5rem; text-align: center; font-size: 0.85rem;">
                 <a href="#" id="auth-toggle-link" style="color: var(--primary); font-weight: 800; text-decoration: none;">Create account</a>
             </p>
         </div>
@@ -86,155 +70,155 @@
     <!-- MAIN APP -->
     <div id="app-content" class="container hidden">
         <header style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 3rem;">
-            <div>
-                <h1 style="font-weight: 800;">SelavuWatch</h1>
-                <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:600;">Sign Out</button>
+            <h1>SelavuWatch</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" style="width:auto;" onclick="openModal()">+ New Entry</button>
+                <button onclick="logout()" class="btn" style="background:#fee2e2; color:var(--danger);">Sign Out</button>
             </div>
-            <button class="btn btn-primary" style="width:auto;" onclick="toggleModal(true)">+ New Entry</button>
         </header>
 
         <div class="dashboard-grid">
             <div class="stat-card"><h4>Net Benefits</h4><div class="amt" id="stat-savings" style="color:var(--success)">₹0</div></div>
-            <div class="stat-card"><h4>Total Friction</h4><div class="amt" id="stat-friction" style="color:var(--danger)">₹0</div></div>
+            <div class="stat-card"><h4>Total Friction (Waste)</h4><div class="amt" id="stat-friction" style="color:var(--danger)">₹0</div></div>
             <div class="stat-card"><h4>Net Efficiency</h4><div class="amt" id="stat-net" style="color:var(--primary)">₹0</div></div>
-            <div class="stat-card" style="border-left: 4px solid var(--warning);"><h4>Conv. Tax</h4><div class="amt" id="stat-conv" style="color:var(--warning)">₹0</div></div>
         </div>
 
         <section>
-            <h2 style="margin-bottom: 1rem;">Ongoing EMIs</h2>
+            <h2 style="margin-bottom: 1.5rem;">Ongoing EMIs</h2>
             <div class="credit-grid" id="ongoing-list"></div>
         </section>
     </div>
 
-    <!-- ENTRY MODAL -->
+    <!-- ENTRY/EDIT MODAL -->
     <div class="modal" id="entry-modal">
         <div class="modal-content">
             <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 2rem;">
-                <h2>New Credit Entry</h2>
-                <button onclick="toggleModal(false)" style="background:none; border:none; font-size:2rem; cursor:pointer;">&times;</button>
+                <h2 id="modal-title">New Credit Entry</h2>
+                <button onclick="closeModal()" style="background:none; border:none; font-size:2rem; cursor:pointer;">&times;</button>
             </div>
             <form id="purchase-form" class="form-grid">
+                <input type="hidden" name="id" id="edit-id">
                 <div class="span-2"><label>Item Name</label><input type="text" name="item_name" required></div>
-                <div><label>Sticker Price</label><input type="number" name="sticker_price" required></div>
-                <div><label>Monthly EMI</label><input type="number" name="emi_amount" required></div>
+                <div><label>Sticker Price (₹)</label><input type="number" name="sticker_price" required></div>
+                <div><label>Monthly EMI (₹)</label><input type="number" name="emi_amount" required></div>
                 <div><label>Tenure (Months)</label><input type="number" name="tenure" required></div>
-                <div><label>Start Date</label><input type="date" name="start_date" required></div>
+                <div><label>Interest Rate (% Optional)</label><input type="number" step="0.01" name="interest_rate" placeholder="e.g. 14.5"></div>
+                <div><label>Discount/Cashback (₹)</label><input type="number" name="instant_discount" value="0"></div>
+                <div><label>Processing/Other Fees (₹)</label><input type="number" name="marketplace_fee" value="0"></div>
                 
-                <div class="span-2" style="font-weight: 800; color: var(--primary); margin-top: 1rem;">SAVINGS & FRICTION</div>
-                <div><label>Discount</label><input type="number" name="instant_discount" value="0"></div>
-                <div><label>Cashback</label><input type="number" name="cashback" value="0"></div>
-                <div><label>Shipping</label><input type="number" name="shipping_cost" value="0"></div>
-                <div><label>Marketplace Fee</label><input type="number" name="marketplace_fee" value="0"></div>
-                
-                <div class="span-2" style="background: #f8fafc; padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="is_no_cost_emi" style="width: auto;">
-                    <label>No-Cost EMI Active</label>
-                </div>
-                <div class="span-2"><button type="submit" class="btn btn-primary">Add to Ledger</button></div>
+                <div class="span-2"><button type="submit" class="btn btn-primary" id="save-btn">Save to Ledger</button></div>
             </form>
         </div>
     </div>
 
     <script>
-        // --- 1. CONFIG (STRICT SINGLE INITIALIZATION) ---
         const CONFIG = {
-            URL: 'https://ydoijxnpycalnptjgqap.supabase.co', // Clean URL
-            KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlkb2lqeG5weWNhbG5wdGpncWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTg2MjAsImV4cCI6MjA5Mzg3NDYyMH0.CiBcwu6CwMvpeKfmGphZqQ0NEqlOp8YEdUn_c4ElhDk' // Replace this!
+            URL: 'https://ydoijxnpycalnptjgqap.supabase.co',
+            KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlkb2lqeG5weWNhbG5wdGpncWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTg2MjAsImV4cCI6MjA5Mzg3NDYyMH0.CiBcwu6CwMvpeKfmGphZqQ0NEqlOp8YEdUn_c4ElhDk'
         };
 
-        // Initialize Supabase Client
-        const sbClient = window.supabase.createClient(CONFIG.URL, CONFIG.KEY);
+        const sb = window.supabase.createClient(CONFIG.URL, CONFIG.KEY);
+        let isSignUp = false;
 
-        // --- 2. AUTH LOGIC ---
-        let isSignUpMode = false;
-        const authOverlay = document.getElementById('auth-overlay');
-        const appContent = document.getElementById('app-content');
-
+        // AUTH
         document.getElementById('auth-toggle-link').onclick = (e) => {
-            e.preventDefault();
-            isSignUpMode = !isSignUpMode;
-            document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Access SelavuWatch";
-            document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
-            document.getElementById('auth-toggle-link').innerText = isSignUpMode ? "Sign In" : "Create account";
+            isSignUp = !isSignUp;
+            document.getElementById('auth-title').innerText = isSignUp ? "Create Account" : "SelavuWatch Login";
+            document.getElementById('auth-submit-btn').innerText = isSignUp ? "Sign Up" : "Sign In";
         };
 
         document.getElementById('auth-form').onsubmit = async (e) => {
             e.preventDefault();
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-
-            if (isSignUpMode) {
-                const { error } = await sbClient.auth.signUp({ email, password });
-                if (error) alert(error.message); else alert("Check email for link!");
-            } else {
-                const { error } = await sbClient.auth.signInWithPassword({ email, password });
-                if (error) alert(error.message); else checkUser();
-            }
+            const { error } = isSignUp ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
+            if (error) alert(error.message); else checkUser();
         };
 
         async function checkUser() {
-            const { data: { user } } = await sbClient.auth.getUser();
+            const { data: { user } } = await sb.auth.getUser();
             if (user) {
-                authOverlay.classList.add('hidden');
-                appContent.classList.remove('hidden');
-                initApp();
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                loadAll();
             }
         }
 
-        async function logout() {
-            await sbClient.auth.signOut();
-            location.reload();
-        }
+        async function logout() { await sb.auth.signOut(); location.reload(); }
 
-        // --- 3. APP ACTIONS ---
-        function toggleModal(show) { document.getElementById('entry-modal').classList.toggle('modal-active', show); }
-
-        async function initApp() {
-            loadDashboard();
-            loadItems();
-        }
-
-        async function loadDashboard() {
-            const { data } = await sbClient.from('credit_summary').select('*').single();
-            if (data) {
-                document.getElementById('stat-savings').innerText = `₹${data.total_savings || 0}`;
-                document.getElementById('stat-friction').innerText = `₹${data.total_friction || 0}`;
-                document.getElementById('stat-net').innerText = `₹${data.net_gain || 0}`;
-                document.getElementById('stat-conv').innerText = `₹${data.convenience_tax || 0}`;
+        // APP LOGIC
+        function openModal(item = null) {
+            const form = document.getElementById('purchase-form');
+            form.reset();
+            document.getElementById('edit-id').value = item ? item.id : '';
+            document.getElementById('modal-title').innerText = item ? "Edit Entry" : "New Credit Entry";
+            
+            if(item) {
+                Object.keys(item).forEach(key => {
+                    if(form.elements[key]) form.elements[key].value = item[key];
+                });
             }
+            document.getElementById('entry-modal').classList.add('modal-active');
         }
 
-        async function loadItems() {
-            const { data } = await sbClient.from('credit_items').select('*').order('created_at', { ascending: false });
+        function closeModal() { document.getElementById('entry-modal').classList.remove('modal-active'); }
+
+        async function loadAll() {
+            const { data } = await sb.from('credit_items').select('*').order('created_at', { ascending: false });
             const list = document.getElementById('ongoing-list');
             list.innerHTML = '';
 
+            let totalSavings = 0, totalFriction = 0;
+
             if(data) data.forEach(item => {
-                const target = (Number(item.sticker_price) + Number(item.shipping_cost) + Number(item.marketplace_fee)) - Number(item.instant_discount);
+                const totalPaid = Number(item.emi_amount) * Number(item.tenure);
+                const interestWaste = Math.max(0, totalPaid - Number(item.sticker_price));
+                const friction = Number(item.marketplace_fee) + interestWaste;
+                const savings = Number(item.instant_discount);
+
+                totalSavings += savings;
+                totalFriction += friction;
+
                 list.innerHTML += `
                     <article class="credit-card">
+                        <div class="edit-btn" onclick='openEditModal(${JSON.stringify(item)})'>✎</div>
                         <div class="target-trigger">🎯</div>
-                        <div class="tooltip">Strategic Buy: Save ₹${target} in cash to avoid credit tax.</div>
-                        <h3 style="margin-bottom:1rem">${item.item_name}</h3>
-                        <div style="font-size:1.5rem; font-weight:800; color:var(--primary)">₹${item.emi_amount}</div>
+                        <div class="tooltip">
+                            <strong>Interest Waste:</strong> ₹${interestWaste}<br>
+                            <strong>Total Cost:</strong> ₹${totalPaid + Number(item.marketplace_fee)}<br>
+                            <em>You are paying ₹${interestWaste} extra for the bank's profit.</em>
+                        </div>
+                        <h3 style="margin-bottom:0.5rem">${item.item_name}</h3>
+                        <div class="amt" style="color:var(--primary)">₹${item.emi_amount}/mo</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted)">${item.tenure} Months Left</div>
+                        ${interestWaste > 0 ? `<div class="waste-tag">⚠ ₹${interestWaste} Interest Waste</div>` : ''}
                     </article>
                 `;
             });
+
+            document.getElementById('stat-savings').innerText = `₹${totalSavings}`;
+            document.getElementById('stat-friction').innerText = `₹${totalFriction}`;
+            document.getElementById('stat-net').innerText = `₹${totalSavings - totalFriction}`;
         }
+
+        // Global function for the edit button
+        window.openEditModal = (item) => openModal(item);
 
         document.getElementById('purchase-form').onsubmit = async (e) => {
             e.preventDefault();
             const fd = new FormData(e.target);
             const entry = Object.fromEntries(fd.entries());
-            const { data: { user } } = await sbClient.auth.getUser();
+            const id = entry.id;
+            delete entry.id;
 
-            const { error } = await sbClient.from('credit_items').insert([{
-                ...entry,
-                user_id: user.id,
-                is_no_cost_emi: e.target.is_no_cost_emi.checked
-            }]);
+            const { data: { user } } = await sb.auth.getUser();
+            entry.user_id = user.id;
 
-            if (error) alert(error.message); else { toggleModal(false); initApp(); e.target.reset(); }
+            const { error } = id 
+                ? await sb.from('credit_items').update(entry).eq('id', id)
+                : await sb.from('credit_items').insert([entry]);
+
+            if (error) alert(error.message); else { closeModal(); loadAll(); }
         };
 
         window.onload = checkUser;
