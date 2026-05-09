@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SelavuWatch Pro | Debt Transparency</title>
+    <title>SelavuWatch | Professional Credit Ledger</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -30,12 +30,17 @@
         /* --- CARDS --- */
         .credit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; }
         .credit-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid var(--border); position: relative; transition: 0.2s; }
-        .edit-btn { position: absolute; top: 15px; right: 55px; cursor: pointer; background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); transition: 0.2s; }
-        .edit-btn:hover { background: var(--border); }
+        .credit-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); }
 
-        /* --- TARGET & INTEREST --- */
-        .target-trigger { position: absolute; top: 15px; right: 15px; cursor: help; background: #fff7ed; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--warning); font-size: 1.1rem; }
-        .tooltip { position: absolute; top: 55px; right: 15px; background: #1e293b; color: white; padding: 16px; border-radius: 12px; width: 280px; font-size: 0.8rem; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 10; line-height: 1.4; }
+        /* --- ACTION BUTTONS --- */
+        .btn-group { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+        .icon-btn { cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: white; font-size: 0.9rem; transition: 0.2s; }
+        .btn-edit:hover { background: #f1f5f9; }
+        .btn-delete:hover { background: #fee2e2; color: var(--danger); border-color: #fecaca; }
+        .target-trigger { cursor: help; background: #fff7ed; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--warning); font-size: 1.1rem; }
+
+        /* --- TOOLTIP --- */
+        .tooltip { position: absolute; top: 55px; right: 0; background: #1e293b; color: white; padding: 16px; border-radius: 12px; width: 280px; font-size: 0.8rem; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 10; line-height: 1.4; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         .target-trigger:hover + .tooltip { opacity: 1; visibility: visible; }
         .waste-tag { font-size: 0.75rem; font-weight: 700; color: var(--danger); background: #fef2f2; padding: 4px 8px; border-radius: 6px; margin-top: 8px; display: inline-block; }
 
@@ -45,6 +50,7 @@
         .modal-content { background: white; width: 95%; max-width: 650px; padding: 2.5rem; border-radius: 28px; max-height: 90vh; overflow-y: auto; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
         .span-2 { grid-column: span 2; }
+        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         input { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 10px; margin-top: 4px; font-size: 1rem; }
         .btn { cursor: pointer; border: none; font-weight: 700; border-radius: 12px; padding: 1rem; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
@@ -55,7 +61,7 @@
     <!-- AUTH SECTION -->
     <div id="auth-overlay">
         <div class="auth-card">
-            <h2 id="auth-title" style="text-align: center; margin-bottom: 2rem;">SelavuWatch Login</h2>
+            <h2 id="auth-title" style="text-align: center; margin-bottom: 2rem;">SelavuWatch</h2>
             <form id="auth-form">
                 <input type="email" id="auth-email" placeholder="Email" style="margin-bottom: 1rem;" required>
                 <input type="password" id="auth-password" placeholder="Password" style="margin-bottom: 1.5rem;" required>
@@ -78,9 +84,9 @@
         </header>
 
         <div class="dashboard-grid">
-            <div class="stat-card"><h4>Net Benefits</h4><div class="amt" id="stat-savings" style="color:var(--success)">₹0</div></div>
-            <div class="stat-card"><h4>Total Friction (Waste)</h4><div class="amt" id="stat-friction" style="color:var(--danger)">₹0</div></div>
-            <div class="stat-card"><h4>Net Efficiency</h4><div class="amt" id="stat-net" style="color:var(--primary)">₹0</div></div>
+            <div class="stat-card"><h4>Net Savings</h4><div class="amt" id="stat-savings" style="color:var(--success)">₹0</div></div>
+            <div class="stat-card"><h4>Friction (Waste)</h4><div class="amt" id="stat-friction" style="color:var(--danger)">₹0</div></div>
+            <div class="stat-card"><h4>Financial Health</h4><div class="amt" id="stat-net" style="color:var(--primary)">₹0</div></div>
         </div>
 
         <section>
@@ -102,11 +108,15 @@
                 <div><label>Sticker Price (₹)</label><input type="number" name="sticker_price" required></div>
                 <div><label>Monthly EMI (₹)</label><input type="number" name="emi_amount" required></div>
                 <div><label>Tenure (Months)</label><input type="number" name="tenure" required></div>
-                <div><label>Interest Rate (% Optional)</label><input type="number" step="0.01" name="interest_rate" placeholder="e.g. 14.5"></div>
+                <div><label>Interest Rate (%)</label><input type="number" step="0.01" name="interest_rate" value="0"></div>
                 <div><label>Discount/Cashback (₹)</label><input type="number" name="instant_discount" value="0"></div>
-                <div><label>Processing/Other Fees (₹)</label><input type="number" name="marketplace_fee" value="0"></div>
                 
-                <div class="span-2"><button type="submit" class="btn btn-primary" id="save-btn">Save to Ledger</button></div>
+                <div class="span-2" style="font-weight: 800; color: var(--danger); border-bottom: 1px solid var(--border); margin-top: 10px;">FEES & TAXES</div>
+                <div><label>Shipping Cost (₹)</label><input type="number" name="shipping_cost" value="0"></div>
+                <div><label>Platform/Marketplace Fee (₹)</label><input type="number" name="marketplace_fee" value="0"></div>
+                <div class="span-2"><label>GST/Tax Amount (₹)</label><input type="number" name="gst_amount" value="0"></div>
+                
+                <div class="span-2"><button type="submit" class="btn btn-primary" id="save-btn">Save Entry</button></div>
             </form>
         </div>
     </div>
@@ -120,10 +130,10 @@
         const sb = window.supabase.createClient(CONFIG.URL, CONFIG.KEY);
         let isSignUp = false;
 
-        // AUTH
+        // AUTH HANDLERS
         document.getElementById('auth-toggle-link').onclick = (e) => {
             isSignUp = !isSignUp;
-            document.getElementById('auth-title').innerText = isSignUp ? "Create Account" : "SelavuWatch Login";
+            document.getElementById('auth-title').innerText = isSignUp ? "Create Account" : "SelavuWatch";
             document.getElementById('auth-submit-btn').innerText = isSignUp ? "Sign Up" : "Sign In";
         };
 
@@ -152,7 +162,6 @@
             form.reset();
             document.getElementById('edit-id').value = item ? item.id : '';
             document.getElementById('modal-title').innerText = item ? "Edit Entry" : "New Credit Entry";
-            
             if(item) {
                 Object.keys(item).forEach(key => {
                     if(form.elements[key]) form.elements[key].value = item[key];
@@ -163,17 +172,23 @@
 
         function closeModal() { document.getElementById('entry-modal').classList.remove('modal-active'); }
 
+        async function deleteItem(id) {
+            if(!confirm("Are you sure you want to delete this entry?")) return;
+            const { error } = await sb.from('credit_items').delete().eq('id', id);
+            if(error) alert(error.message); else loadAll();
+        }
+
         async function loadAll() {
             const { data } = await sb.from('credit_items').select('*').order('created_at', { ascending: false });
             const list = document.getElementById('ongoing-list');
             list.innerHTML = '';
-
             let totalSavings = 0, totalFriction = 0;
 
             if(data) data.forEach(item => {
-                const totalPaid = Number(item.emi_amount) * Number(item.tenure);
-                const interestWaste = Math.max(0, totalPaid - Number(item.sticker_price));
-                const friction = Number(item.marketplace_fee) + interestWaste;
+                // MATH: Total Paid = (EMI * Tenure) + Extra Fees
+                const totalEmiPayments = Number(item.emi_amount) * Number(item.tenure);
+                const interestWaste = Math.max(0, totalEmiPayments - Number(item.sticker_price));
+                const friction = Number(item.marketplace_fee) + Number(item.shipping_cost) + Number(item.gst_amount) + interestWaste;
                 const savings = Number(item.instant_discount);
 
                 totalSavings += savings;
@@ -181,17 +196,20 @@
 
                 list.innerHTML += `
                     <article class="credit-card">
-                        <div class="edit-btn" onclick='openEditModal(${JSON.stringify(item)})'>✎</div>
-                        <div class="target-trigger">🎯</div>
-                        <div class="tooltip">
-                            <strong>Interest Waste:</strong> ₹${interestWaste}<br>
-                            <strong>Total Cost:</strong> ₹${totalPaid + Number(item.marketplace_fee)}<br>
-                            <em>You are paying ₹${interestWaste} extra for the bank's profit.</em>
+                        <div class="btn-group">
+                            <div class="icon-btn btn-edit" onclick='openEditModal(${JSON.stringify(item)})'>✎</div>
+                            <div class="icon-btn btn-delete" onclick="deleteItem('${item.id}')">🗑</div>
+                            <div class="target-trigger">🎯</div>
+                            <div class="tooltip">
+                                <strong>Interest Waste:</strong> ₹${interestWaste}<br>
+                                <strong>Fees & Taxes:</strong> ₹${Number(item.marketplace_fee) + Number(item.shipping_cost) + Number(item.gst_amount)}<br>
+                                <strong>Total Lost to Credit:</strong> ₹${friction}
+                            </div>
                         </div>
                         <h3 style="margin-bottom:0.5rem">${item.item_name}</h3>
                         <div class="amt" style="color:var(--primary)">₹${item.emi_amount}/mo</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted)">${item.tenure} Months Left</div>
-                        ${interestWaste > 0 ? `<div class="waste-tag">⚠ ₹${interestWaste} Interest Waste</div>` : ''}
+                        <div style="font-size:0.8rem; color:var(--text-muted)">${item.tenure} Months Tenure</div>
+                        ${friction > 0 ? `<div class="waste-tag">⚠ Total Friction: ₹${friction}</div>` : ''}
                     </article>
                 `;
             });
@@ -201,15 +219,13 @@
             document.getElementById('stat-net').innerText = `₹${totalSavings - totalFriction}`;
         }
 
-        // Global function for the edit button
         window.openEditModal = (item) => openModal(item);
 
         document.getElementById('purchase-form').onsubmit = async (e) => {
             e.preventDefault();
             const fd = new FormData(e.target);
             const entry = Object.fromEntries(fd.entries());
-            const id = entry.id;
-            delete entry.id;
+            const id = entry.id; delete entry.id;
 
             const { data: { user } } = await sb.auth.getUser();
             entry.user_id = user.id;
