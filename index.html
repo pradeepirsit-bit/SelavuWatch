@@ -3,221 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit Ledger Pro | True Cost MVP</title>
+    <title>Credit Ledger Pro | Supabase Integrated</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --primary: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --perk: #8b5cf6; /* Purple for perks/rewards */
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --bg-app: #f1f5f9;
-            --bg-card: #ffffff;
-            --border: #e2e8f0;
+            --primary: #2563eb; --primary-dark: #1d4ed8;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --text-main: #0f172a; --text-muted: #64748b;
+            --bg-app: #f8fafc; --bg-card: #ffffff; --border: #e2e8f0;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); padding: 2rem 1rem; }
-        .container { max-width: 1100px; margin: 0 auto; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+
+        /* --- Auth Overlay --- */
+        #auth-overlay {
+            position: fixed; inset: 0; background: var(--bg-app); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); width: 100%; max-width: 400px; }
 
         /* --- Dashboard --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 3rem; }
+        .stat-card { background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); }
+        .stat-card h4 { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .amt { font-size: 1.6rem; font-weight: 800; }
 
-        .stat-card {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
+        /* --- Credit Cards --- */
+        .credit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem; }
+        .credit-card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); position: relative; }
+        .card-completed { opacity: 0.7; grayscale: 0.5; background: #f1f5f9; }
 
-        .stat-card h4 { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-        .amt { font-size: 1.8rem; font-weight: 800; }
-        .plus { color: var(--success); }
-        .minus { color: var(--danger); }
-        .neutral { color: var(--primary); }
-
-        /* --- EMI Lists --- */
-        .section-header { 
-            margin: 2rem 0 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .credit-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .credit-card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); transition: 0.2s; }
-        .credit-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
-        .emi-badge { text-align: right; }
-        .emi-amt { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
-
-        /* --- Split Detail Grid (Benefits vs Costs) --- */
-        .analysis-box {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
-            background: var(--border); border-radius: 12px; overflow: hidden; margin-top: 1rem;
-        }
-
-        .analysis-side { background: #fff; padding: 12px; }
-        .side-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        
-        .item-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
-        .item-label { color: var(--text-muted); }
-        .item-val { font-weight: 600; }
-        .text-success { color: var(--success); }
-        .text-danger { color: var(--danger); }
-        .text-perk { color: var(--perk); }
+        /* --- Target Saver Tooltip --- */
+        .target-trigger { position: absolute; top: 15px; right: 15px; cursor: help; background: #fff7ed; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--warning); }
+        .tooltip { position: absolute; top: 50px; right: 15px; background: #1e293b; color: white; padding: 12px; border-radius: 8px; width: 240px; font-size: 0.75rem; opacity: 0; visibility: hidden; transition: 0.2s; z-index: 10; pointer-events: none; }
+        .target-trigger:hover + .tooltip { opacity: 1; visibility: visible; }
 
         /* --- Modal --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
-            display: none; justify-content: center; align-items: center; z-index: 1000;
-        }
-        .modal-active { display: flex; }
-        .modal-content { 
-            background: white; width: 95%; max-width: 650px; padding: 2rem; border-radius: 24px;
-            max-height: 90vh; overflow-y: auto; 
-        }
+        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 95%; max-width: 700px; padding: 2rem; border-radius: 24px; max-height: 90vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .span-2 { grid-column: span 2; }
 
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-        .full-width { grid-column: span 2; }
-        .form-section-title { grid-column: span 2; font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 1rem; border-bottom: 1px solid var(--border); }
-
-        input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
-        .btn-submit { background: var(--primary); color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 2rem; }
+        input, select { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+        button { cursor: pointer; border: none; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; padding: 0.8rem 1.5rem; border-radius: 10px; font-weight: 700; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 2rem;">
-        <div>
-            <h1>Credit Health Dashboard</h1>
-            <p style="color:var(--text-muted)">Tracking benefits, friction, and net value</p>
-        </div>
-        <button class="btn-submit" style="width:auto; margin:0; padding: 0.75rem 1.5rem;" onclick="toggleModal()">+ New Purchase</button>
-    </header>
-
-    <!-- DASHBOARD -->
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <h4>Total Perks & Savings</h4>
-            <div class="amt plus">₹18,500</div>
-            <p style="font-size: 0.7rem; color: var(--text-muted);">Discounts + Cashbacks + Points</p>
-        </div>
-        <div class="stat-card">
-            <h4>Total Friction (Selavu)</h4>
-            <div class="amt minus">₹6,200</div>
-            <p style="font-size: 0.7rem; color: var(--text-muted);">Interest + Fees + GST</p>
-        </div>
-        <div class="stat-card">
-            <h4>Net Credit Gain</h4>
-            <div class="amt neutral">₹12,300</div>
-            <p style="font-size: 0.7rem; color: var(--text-muted);">True value generated by credit</p>
+    <!-- AUTH SECTION -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2 style="margin-bottom: 1.5rem;">Secure Login</h2>
+            <form id="login-form">
+                <label>Email</label>
+                <input type="email" id="auth-email" required>
+                <div style="margin-top: 1rem;">
+                    <label>Password</label>
+                    <input type="password" id="auth-password" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 2rem;">Access Ledger</button>
+            </form>
         </div>
     </div>
 
-    <!-- ONGOING SECTION -->
-    <div class="section-header">
-        <h2 style="font-size: 1.2rem;">Ongoing Liabilities</h2>
-    </div>
-
-    <div class="credit-grid">
-        <article class="credit-card">
-            <div class="card-header">
-                <div>
-                    <h3 style="font-size: 1.1rem;">MacBook Air M3</h3>
-                    <span style="font-size: 0.75rem; color:var(--success); font-weight:700;">NO-COST EMI</span>
-                </div>
-                <div class="emi-badge">
-                    <span style="font-size:0.7rem; color:var(--text-muted)">MONTHLY EMI</span>
-                    <div class="emi-amt">₹9,580</div>
-                </div>
+    <!-- MAIN APP -->
+    <div class="container">
+        <header style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 2rem;">
+            <div>
+                <h1>Credit Health Tracker</h1>
+                <button onclick="logout()" style="font-size: 0.8rem; color: var(--danger); background: none;">Logout</button>
             </div>
+            <button class="btn-primary" onclick="toggleModal(true)">+ New Purchase</button>
+        </header>
 
-            <div class="analysis-box">
-                <!-- Perks Side -->
-                <div class="analysis-side">
-                    <span class="side-title text-success">Perks (Savings)</span>
-                    <div class="item-row"><span class="item-label">Instant Disc.</span><span class="item-val text-success">₹5,000</span></div>
-                    <div class="item-row"><span class="item-label">Cashback</span><span class="item-val text-success">₹2,500</span></div>
-                    <div class="item-row"><span class="item-label">Points Val.</span><span class="item-val text-perk">₹500</span></div>
-                </div>
-                <!-- Friction Side -->
-                <div class="analysis-side">
-                    <span class="side-title text-danger">Friction (Loss)</span>
-                    <div class="item-row"><span class="item-label">Derived Int.</span><span class="item-val">₹5,000</span></div>
-                    <div class="item-row"><span class="item-label">Proc. Fee</span><span class="item-val">₹199</span></div>
-                    <div class="item-row"><span class="item-label">GST on Int.</span><span class="item-val">₹900</span></div>
-                </div>
-            </div>
-            <div style="margin-top:12px; padding-top:8px; border-top:1px dashed var(--border); display:flex; justify-content:space-between; font-size:0.8rem;">
-                <span class="item-label">Net Gain on Purchase:</span>
-                <span style="font-weight:800; color:var(--success)">+₹1,901</span>
-            </div>
-        </article>
-    </div>
-</div>
-
-<!-- INPUT MODAL -->
-<div class="modal-overlay" id="modal">
-    <div class="modal-content">
-        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 1.5rem;">
-            <h2>Add Credit Purchase</h2>
-            <button onclick="toggleModal()" style="border:none; background:none; cursor:pointer; font-size:2rem;">&times;</button>
+        <!-- DASHBOARD -->
+        <div class="dashboard-grid">
+            <div class="stat-card"><h4>Net Benefits</h4><div class="amt" id="stat-savings" style="color:var(--success)">₹0</div></div>
+            <div class="stat-card"><h4>Total Friction</h4><div class="amt" id="stat-friction" style="color:var(--danger)">₹0</div></div>
+            <div class="stat-card"><h4>Net Gain</h4><div class="amt" id="stat-net" style="color:var(--primary)">₹0</div></div>
+            <div class="stat-card" style="border-left: 4px solid var(--warning);"><h4>Conv. Tax</h4><div class="amt" id="stat-conv" style="color:var(--warning)">₹0</div></div>
         </div>
 
-        <form class="form-grid">
-            <div class="full-width">
-                <label style="font-size:0.8rem; font-weight:700;">Purchase Name</label>
-                <input type="text" placeholder="e.g. Sony PS5">
-            </div>
-            
-            <div class="form-section-title">Core Financials</div>
-            <div><label style="font-size:0.8rem;">Sticker Price</label><input type="number" placeholder="₹"></div>
-            <div><label style="font-size:0.8rem;">Monthly EMI</label><input type="number" placeholder="₹"></div>
-            <div><label style="font-size:0.8rem;">Tenure (Months)</label><input type="number"></div>
-            <div><label style="font-size:0.8rem;">Start Date</label><input type="date"></div>
+        <section>
+            <h2 style="margin-bottom: 1rem;">Ongoing EMIs</h2>
+            <div class="credit-grid" id="ongoing-list"></div>
+        </section>
 
-            <div class="form-section-title">Perks & Benefits (Savings)</div>
-            <div style="display:flex; align-items:center; gap:8px; background:#f0fdf4; padding:10px; border-radius:8px;">
-                <input type="checkbox" id="nocost" style="width:auto; margin:0;">
-                <label for="nocost" style="font-size:0.8rem; font-weight:700;">No-Cost EMI?</label>
-            </div>
-            <div><label style="font-size:0.8rem;">Instant Bank Discount</label><input type="number" placeholder="₹"></div>
-            <div><label style="font-size:0.8rem;">Cashback Amount</label><input type="number" placeholder="₹"></div>
-            <div><label style="font-size:0.8rem;">Reward Points Value</label><input type="number" placeholder="₹"></div>
-
-            <div class="form-section-title">Friction & Costs (Losses)</div>
-            <div><label style="font-size:0.8rem;">Processing Fee</label><input type="number" placeholder="₹"></div>
-            <div><label style="font-size:0.8rem;">Bank Interest Rate %</label><input type="number" step="0.01"></div>
-            <div><label style="font-size:0.8rem;">GST on Interest (Est.)</label><input type="number" placeholder="₹"></div>
-            <div class="full-width">
-                <button type="submit" class="btn-submit">Add to Tracker</button>
-            </div>
-        </form>
+        <section style="margin-top: 3rem;">
+            <h2 style="margin-bottom: 1rem; color: var(--text-muted);">Completed</h2>
+            <div class="credit-grid" id="completed-list"></div>
+        </section>
     </div>
-</div>
 
-<script>
-    function toggleModal() {
-        document.getElementById('modal').classList.toggle('modal-active');
-    }
+    <!-- INPUT MODAL -->
+    <div class="modal" id="entry-modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                <h2>Add Credit Entry</h2>
+                <button onclick="toggleModal(false)" style="font-size: 2rem;">&times;</button>
+            </div>
+            <form id="purchase-form" class="form-grid">
+                <div class="span-2"><label>Item Name</label><input type="text" name="item_name" required></div>
+                <div><label>Sticker Price</label><input type="number" name="sticker_price" required></div>
+                <div><label>Monthly EMI</label><input type="number" name="emi_amount" required></div>
+                <div><label>Tenure (Months)</label><input type="number" name="tenure" required></div>
+                <div><label>Start Date</label><input type="date" name="start_date" required></div>
+                
+                <div class="span-2" style="font-size: 0.8rem; font-weight: 800; color: var(--primary); margin-top: 1rem;">PERKS & FRICTION</div>
+                <div><label>Instant Discount</label><input type="number" name="instant_discount" value="0"></div>
+                <div><label>Cashback</label><input type="number" name="cashback" value="0"></div>
+                <div><label>Shipping Cost</label><input type="number" name="shipping_cost" value="0"></div>
+                <div><label>Marketplace Fee</label><input type="number" name="marketplace_fee" value="0"></div>
+                
+                <div class="span-2" style="background: #f1f5f9; padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="is_no_cost_emi" style="width: auto;">
+                    <label>No-Cost EMI (Derived Interest from Discount)</label>
+                </div>
+                
+                <div class="span-2"><button type="submit" class="btn-primary" style="width: 100%;">Analyze & Save to Supabase</button></div>
+            </form>
+        </div>
+    </div>
 
-    // Modal Close on backdrop click
-    window.onclick = function(event) {
-        if (event.target == document.getElementById('modal')) toggleModal();
-    }
-</script>
+    <script>
+        // CONFIG - Replace with your actual Supabase credentials
+        const SB_URL = 'YOUR_SUPABASE_URL';
+        const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = document.getElementById('auth-overlay') ? supabase.createClient(SB_URL, SB_KEY) : null;
+
+        // --- AUTH LOGIC ---
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) alert(error.message); else checkUser();
+        };
+
+        async function checkUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                document.getElementById('auth-overlay').classList.add('hidden');
+                initApp();
+            }
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            location.reload();
+        }
+
+        // --- CORE APP LOGIC ---
+        function toggleModal(show) { document.getElementById('entry-modal').style.display = show ? 'flex' : 'none'; }
+
+        async function initApp() {
+            loadSummary();
+            loadItems();
+        }
+
+        async function loadSummary() {
+            const { data } = await supabase.from('credit_summary').select('*').single();
+            if (data) {
+                document.getElementById('stat-savings').innerText = `₹${data.total_savings || 0}`;
+                document.getElementById('stat-friction').innerText = `₹${data.total_friction || 0}`;
+                document.getElementById('stat-net').innerText = `₹${data.net_gain || 0}`;
+                document.getElementById('stat-conv').innerText = `₹${data.convenience_tax || 0}`;
+            }
+        }
+
+        async function loadItems() {
+            const { data, error } = await supabase.from('credit_items').select('*').order('created_at', { ascending: false });
+            const ongoingList = document.getElementById('ongoing-list');
+            const completedList = document.getElementById('completed-list');
+            ongoingList.innerHTML = ''; completedList.innerHTML = '';
+
+            data.forEach(item => {
+                const totalFriction = Number(item.shipping_cost) + Number(item.marketplace_fee) + Number(item.processing_fee);
+                const targetCashPrice = Number(item.sticker_price) + totalFriction - Number(item.instant_discount);
+                
+                const card = `
+                    <article class="credit-card ${item.status === 'completed' ? 'card-completed' : ''}">
+                        <div class="target-trigger">🎯</div>
+                        <div class="tooltip">
+                            <strong>Strategic Buy:</strong><br>
+                            If you saved <strong>₹${targetCashPrice}</strong>, you'd avoid the credit friction.
+                        </div>
+                        <div style="margin-bottom:1rem">
+                            <h3>${item.item_name}</h3>
+                            <span style="font-size:0.7rem; color:var(--text-muted)">${item.tenure} Months • Started ${item.start_date}</span>
+                        </div>
+                        <div style="font-size:1.5rem; font-weight:800; color:var(--primary)">₹${item.emi_amount}</div>
+                    </article>
+                `;
+                if(item.status === 'ongoing') ongoingList.innerHTML += card; else completedList.innerHTML += card;
+            });
+        }
+
+        document.getElementById('purchase-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const entry = Object.fromEntries(formData.entries());
+            const { data: { user } } = await supabase.auth.getUser();
+
+            const { error } = await supabase.from('credit_items').insert([{
+                ...entry,
+                user_id: user.id,
+                is_no_cost_emi: e.target.is_no_cost_emi.checked
+            }]);
+
+            if (error) alert(error.message); else { toggleModal(false); initApp(); }
+        };
+
+        window.onload = checkUser;
+    </script>
 </body>
 </html>
