@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit Health Tracker | Dashboard</title>
+    <title>Credit Ledger Pro | True Cost MVP</title>
     <style>
         :root {
             --primary: #2563eb;
             --success: #10b981;
             --danger: #ef4444;
-            --warning: #f59e0b;
+            --perk: #8b5cf6; /* Purple for perks/rewards */
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --bg-app: #f8fafc;
+            --bg-app: #f1f5f9;
             --bg-card: #ffffff;
             --border: #e2e8f0;
         }
@@ -21,7 +21,7 @@
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-app); color: var(--text-main); padding: 2rem 1rem; }
         .container { max-width: 1100px; margin: 0 auto; }
 
-        /* --- Dashboard Summary --- */
+        /* --- Dashboard --- */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -34,190 +34,190 @@
             padding: 1.5rem;
             border-radius: 16px;
             border: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
 
-        .stat-card h4 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-        .stat-card .amt { font-size: 1.75rem; font-weight: 800; }
-        .amt.plus { color: var(--success); }
-        .amt.minus { color: var(--danger); }
+        .stat-card h4 { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .amt { font-size: 1.8rem; font-weight: 800; }
+        .plus { color: var(--success); }
+        .minus { color: var(--danger); }
+        .neutral { color: var(--primary); }
 
-        /* --- EMI List Sections --- */
+        /* --- EMI Lists --- */
         .section-header { 
+            margin: 2rem 0 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;
         }
-        
-        .section-title { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
-        .badge-count { font-size: 0.75rem; background: var(--border); padding: 2px 8px; border-radius: 12px; }
 
         .credit-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-            gap: 1.5rem; margin-bottom: 4rem;
+            gap: 1.5rem;
         }
 
-        /* --- Cards & Logic --- */
-        .credit-card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); position: relative; }
-        .card-completed { opacity: 0.7; filter: grayscale(0.5); background: #f1f5f9; }
-        .completed-stamp { 
-            position: absolute; top: 10px; right: 10px; border: 2px solid var(--success); 
-            color: var(--success); padding: 2px 10px; border-radius: 4px; font-weight: 800; transform: rotate(15deg);
-        }
+        .credit-card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); transition: 0.2s; }
+        .credit-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 
-        /* Reuse previous card styles for brevity */
         .card-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
-        .emi-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
-        .fees-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; font-size: 0.8rem; }
-        .label { color: var(--text-muted); display: block; font-size: 0.7rem; }
-        .val { font-weight: 600; }
+        .emi-badge { text-align: right; }
+        .emi-amt { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
-        /* --- Modal Styling --- */
+        /* --- Split Detail Grid (Benefits vs Costs) --- */
+        .analysis-box {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+            background: var(--border); border-radius: 12px; overflow: hidden; margin-top: 1rem;
+        }
+
+        .analysis-side { background: #fff; padding: 12px; }
+        .side-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        
+        .item-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+        .item-label { color: var(--text-muted); }
+        .item-val { font-weight: 600; }
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-perk { color: var(--perk); }
+
+        /* --- Modal --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px);
-            display: none; justify-content: center; align-items: center; z-index: 100;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
         }
         .modal-active { display: flex; }
-        .modal-content { background: white; width: 90%; max-width: 600px; padding: 2rem; border-radius: 20px; max-height: 90vh; overflow-y: auto; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-        .span-2 { grid-column: span 2; }
-        input { width: 100%; padding: 0.7rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 5px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: 700; width: 100%; margin-top: 1.5rem; }
-        
-        .header-actions { display: flex; gap: 1rem; }
+        .modal-content { 
+            background: white; width: 95%; max-width: 650px; padding: 2rem; border-radius: 24px;
+            max-height: 90vh; overflow-y: auto; 
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+        .full-width { grid-column: span 2; }
+        .form-section-title { grid-column: span 2; font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 1rem; border-bottom: 1px solid var(--border); }
+
+        input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 2rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header class="app-header" style="display:flex; justify-content: space-between; margin-bottom: 2rem;">
-        <h1>Credit Ledger</h1>
-        <button class="btn-main" style="width:auto; margin:0;" onclick="openModal()">+ Add New Credit</button>
+    <header style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 2rem;">
+        <div>
+            <h1>Credit Health Dashboard</h1>
+            <p style="color:var(--text-muted)">Tracking benefits, friction, and net value</p>
+        </div>
+        <button class="btn-submit" style="width:auto; margin:0; padding: 0.75rem 1.5rem;" onclick="toggleModal()">+ New Purchase</button>
     </header>
 
-    <!-- DASHBOARD SECTION -->
+    <!-- DASHBOARD -->
     <div class="dashboard-grid">
         <div class="stat-card">
-            <h4>Total Savings (Benefits)</h4>
-            <div class="amt plus">₹12,450</div>
-            <p style="font-size: 0.75rem; color: var(--text-muted);">Discounts & Cashbacks</p>
+            <h4>Total Perks & Savings</h4>
+            <div class="amt plus">₹18,500</div>
+            <p style="font-size: 0.7rem; color: var(--text-muted);">Discounts + Cashbacks + Points</p>
         </div>
         <div class="stat-card">
-            <h4>Total "Selavu" (Losses)</h4>
-            <div class="amt minus">₹8,120</div>
-            <p style="font-size: 0.75rem; color: var(--text-muted);">Interest, Fees & Taxes</p>
+            <h4>Total Friction (Selavu)</h4>
+            <div class="amt minus">₹6,200</div>
+            <p style="font-size: 0.7rem; color: var(--text-muted);">Interest + Fees + GST</p>
         </div>
         <div class="stat-card">
-            <h4>Net Health Score</h4>
-            <div class="amt" style="color: var(--primary);">+₹4,330</div>
-            <p style="font-size: 0.75rem; color: var(--text-muted);">Efficiency of Credit Use</p>
+            <h4>Net Credit Gain</h4>
+            <div class="amt neutral">₹12,300</div>
+            <p style="font-size: 0.7rem; color: var(--text-muted);">True value generated by credit</p>
         </div>
     </div>
 
-    <!-- ONGOING EMI LIST -->
+    <!-- ONGOING SECTION -->
     <div class="section-header">
-        <div class="section-title">Ongoing EMIs <span class="badge-count">2</span></div>
+        <h2 style="font-size: 1.2rem;">Ongoing Liabilities</h2>
     </div>
-    
+
     <div class="credit-grid">
-        <!-- Active Card 1 -->
         <article class="credit-card">
             <div class="card-header">
                 <div>
-                    <h3>iPhone 15 Pro</h3>
-                    <span class="label" style="color:var(--success)">No-Cost EMI Active</span>
+                    <h3 style="font-size: 1.1rem;">MacBook Air M3</h3>
+                    <span style="font-size: 0.75rem; color:var(--success); font-weight:700;">NO-COST EMI</span>
                 </div>
-                <div style="text-align:right">
-                    <span class="label">EMI Amount</span>
-                    <div class="emi-value">₹12,500</div>
+                <div class="emi-badge">
+                    <span style="font-size:0.7rem; color:var(--text-muted)">MONTHLY EMI</span>
+                    <div class="emi-amt">₹9,580</div>
                 </div>
             </div>
-            <div class="fees-grid">
-                <div><span class="label">Discount</span><span class="val">₹5,000</span></div>
-                <div><span class="label">Derived Int.</span><span class="val">₹5,000</span></div>
-                <div><span class="label">GST on Int.</span><span class="val">₹900</span></div>
-                <div><span class="label">Proc. Fee</span><span class="val">₹199</span></div>
-                <div><span class="label">Tenure</span><span class="val">6 Months</span></div>
-                <div><span class="label">Net Cost</span><span class="val" style="color:var(--danger)">₹6,099</span></div>
-            </div>
-        </article>
 
-        <!-- Active Card 2 -->
-        <article class="credit-card">
-            <div class="card-header">
-                <div><h3>Furniture Loan</h3><span class="label">Standard EMI</span></div>
-                <div style="text-align:right"><span class="label">EMI</span><div class="emi-value">₹4,200</div></div>
+            <div class="analysis-box">
+                <!-- Perks Side -->
+                <div class="analysis-side">
+                    <span class="side-title text-success">Perks (Savings)</span>
+                    <div class="item-row"><span class="item-label">Instant Disc.</span><span class="item-val text-success">₹5,000</span></div>
+                    <div class="item-row"><span class="item-label">Cashback</span><span class="item-val text-success">₹2,500</span></div>
+                    <div class="item-row"><span class="item-label">Points Val.</span><span class="item-val text-perk">₹500</span></div>
+                </div>
+                <!-- Friction Side -->
+                <div class="analysis-side">
+                    <span class="side-title text-danger">Friction (Loss)</span>
+                    <div class="item-row"><span class="item-label">Derived Int.</span><span class="item-val">₹5,000</span></div>
+                    <div class="item-row"><span class="item-label">Proc. Fee</span><span class="item-val">₹199</span></div>
+                    <div class="item-row"><span class="item-label">GST on Int.</span><span class="item-val">₹900</span></div>
+                </div>
             </div>
-            <div class="fees-grid">
-                <div><span class="label">Interest</span><span class="val">14% p.a.</span></div>
-                <div><span class="label">Tenure</span><span class="val">24 Months</span></div>
-                <div><span class="label">Proc. Fee</span><span class="val">₹999</span></div>
-            </div>
-        </article>
-    </div>
-
-    <!-- COMPLETED EMI LIST -->
-    <div class="section-header">
-        <div class="section-title">Completed <span class="badge-count">1</span></div>
-    </div>
-    
-    <div class="credit-grid">
-        <article class="credit-card card-completed">
-            <div class="completed-stamp">PAID</div>
-            <div class="card-header">
-                <div><h3>Laptop Upgrade</h3><span class="label">Completed Dec 2025</span></div>
-                <div style="text-align:right"><span class="label">Was EMI</span><div class="emi-value">₹8,000</div></div>
-            </div>
-            <div class="fees-grid">
-                <div><span class="label">Total Paid</span><span class="val">₹96,000</span></div>
-                <div><span class="label">Total Interest</span><span class="val">₹4,200</span></div>
+            <div style="margin-top:12px; padding-top:8px; border-top:1px dashed var(--border); display:flex; justify-content:space-between; font-size:0.8rem;">
+                <span class="item-label">Net Gain on Purchase:</span>
+                <span style="font-weight:800; color:var(--success)">+₹1,901</span>
             </div>
         </article>
     </div>
 </div>
 
-<!-- MODAL FOR INPUT -->
+<!-- INPUT MODAL -->
 <div class="modal-overlay" id="modal">
     <div class="modal-content">
-        <div style="display:flex; justify-content: space-between;">
-            <h2>Add Credit Item</h2>
-            <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:1.5rem;">&times;</button>
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 1.5rem;">
+            <h2>Add Credit Purchase</h2>
+            <button onclick="toggleModal()" style="border:none; background:none; cursor:pointer; font-size:2rem;">&times;</button>
         </div>
-        
+
         <form class="form-grid">
-            <div class="span-2"><label>Item Name</label><input type="text" placeholder="e.g. Sony TV"></div>
-            <div><label>Total Value (Sticker Price)</label><input type="number" placeholder="₹"></div>
-            <div><label>Monthly EMI</label><input type="number" placeholder="₹"></div>
-            
-            <div style="display:flex; align-items:center; gap:10px; background:#f1f5f9; padding:10px; border-radius:8px;">
-                <input type="checkbox" id="nocost" style="width:auto; margin:0;">
-                <label for="nocost">No-Cost EMI?</label>
+            <div class="full-width">
+                <label style="font-size:0.8rem; font-weight:700;">Purchase Name</label>
+                <input type="text" placeholder="e.g. Sony PS5">
             </div>
-            <div><label>Discount Value</label><input type="number" id="discountInput" placeholder="₹ (Derived Interest)"></div>
             
-            <div><label>Processing Fee</label><input type="number"></div>
-            <div><label>GST / Taxes</label><input type="number"></div>
-            <div><label>Tenure (Months)</label><input type="number"></div>
-            <div><label>Start Date</label><input type="date"></div>
-            
-            <div class="span-2">
-                <button type="submit" class="btn-main">Add to Ongoing EMIs</button>
+            <div class="form-section-title">Core Financials</div>
+            <div><label style="font-size:0.8rem;">Sticker Price</label><input type="number" placeholder="₹"></div>
+            <div><label style="font-size:0.8rem;">Monthly EMI</label><input type="number" placeholder="₹"></div>
+            <div><label style="font-size:0.8rem;">Tenure (Months)</label><input type="number"></div>
+            <div><label style="font-size:0.8rem;">Start Date</label><input type="date"></div>
+
+            <div class="form-section-title">Perks & Benefits (Savings)</div>
+            <div style="display:flex; align-items:center; gap:8px; background:#f0fdf4; padding:10px; border-radius:8px;">
+                <input type="checkbox" id="nocost" style="width:auto; margin:0;">
+                <label for="nocost" style="font-size:0.8rem; font-weight:700;">No-Cost EMI?</label>
+            </div>
+            <div><label style="font-size:0.8rem;">Instant Bank Discount</label><input type="number" placeholder="₹"></div>
+            <div><label style="font-size:0.8rem;">Cashback Amount</label><input type="number" placeholder="₹"></div>
+            <div><label style="font-size:0.8rem;">Reward Points Value</label><input type="number" placeholder="₹"></div>
+
+            <div class="form-section-title">Friction & Costs (Losses)</div>
+            <div><label style="font-size:0.8rem;">Processing Fee</label><input type="number" placeholder="₹"></div>
+            <div><label style="font-size:0.8rem;">Bank Interest Rate %</label><input type="number" step="0.01"></div>
+            <div><label style="font-size:0.8rem;">GST on Interest (Est.)</label><input type="number" placeholder="₹"></div>
+            <div class="full-width">
+                <button type="submit" class="btn-submit">Add to Tracker</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function openModal() { document.getElementById('modal').classList.add('modal-active'); }
-    function closeModal() { document.getElementById('modal').classList.remove('modal-active'); }
+    function toggleModal() {
+        document.getElementById('modal').classList.toggle('modal-active');
+    }
 
-    // Derive logic: If No-Cost is checked, Discount = Interest
-    document.getElementById('nocost').addEventListener('change', function(e) {
-        const discountLabel = document.querySelector('label[for="discountInput"]');
-        if(e.target.checked) {
-            alert("Note: In No-Cost EMI, the Discount value is used as the Derived Interest.");
-        }
-    });
+    // Modal Close on backdrop click
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('modal')) toggleModal();
+    }
 </script>
 </body>
 </html>
