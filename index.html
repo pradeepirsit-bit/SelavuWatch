@@ -39,7 +39,7 @@
         .btn-delete:hover { background: #fee2e2; color: var(--danger); border-color: #fecaca; }
         .target-trigger { cursor: help; background: #fff7ed; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--warning); font-size: 1.1rem; }
 
-        /* --- TOOLTIP --- */
+        /* --- TOOLTIP & TAGS --- */
         .tooltip { position: absolute; top: 55px; right: 0; background: #1e293b; color: white; padding: 16px; border-radius: 12px; width: 280px; font-size: 0.8rem; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 10; line-height: 1.4; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         .target-trigger:hover + .tooltip { opacity: 1; visibility: visible; }
         .waste-tag { font-size: 0.75rem; font-weight: 700; color: var(--danger); background: #fef2f2; padding: 4px 8px; border-radius: 6px; margin-top: 8px; display: inline-block; }
@@ -99,7 +99,7 @@
     <div class="modal" id="entry-modal">
         <div class="modal-content">
             <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 2rem;">
-                <h2 id="modal-title">New Credit Entry</h2>
+                <h2 id="modal-title">Credit Entry</h2>
                 <button onclick="closeModal()" style="background:none; border:none; font-size:2rem; cursor:pointer;">&times;</button>
             </div>
             <form id="purchase-form" class="form-grid">
@@ -108,15 +108,16 @@
                 <div><label>Sticker Price (₹)</label><input type="number" name="sticker_price" required></div>
                 <div><label>Monthly EMI (₹)</label><input type="number" name="emi_amount" required></div>
                 <div><label>Tenure (Months)</label><input type="number" name="tenure" required></div>
+                <div><label>Start Date</label><input type="date" name="start_date" required></div>
                 <div><label>Interest Rate (%)</label><input type="number" step="0.01" name="interest_rate" value="0"></div>
-                <div><label>Discount/Cashback (₹)</label><input type="number" name="instant_discount" value="0"></div>
                 
-                <div class="span-2" style="font-weight: 800; color: var(--danger); border-bottom: 1px solid var(--border); margin-top: 10px;">FEES & TAXES</div>
+                <div class="span-2" style="font-weight: 800; color: var(--danger); border-bottom: 1px solid var(--border); margin-top: 10px;">FEES & SAVINGS</div>
+                <div><label>Discount/Cashback (₹)</label><input type="number" name="instant_discount" value="0"></div>
                 <div><label>Shipping Cost (₹)</label><input type="number" name="shipping_cost" value="0"></div>
                 <div><label>Platform/Marketplace Fee (₹)</label><input type="number" name="marketplace_fee" value="0"></div>
-                <div class="span-2"><label>GST/Tax Amount (₹)</label><input type="number" name="gst_amount" value="0"></div>
+                <div><label>GST Amount (₹)</label><input type="number" name="gst_amount" value="0"></div>
                 
-                <div class="span-2"><button type="submit" class="btn btn-primary" id="save-btn">Save Entry</button></div>
+                <div class="span-2"><button type="submit" class="btn btn-primary" id="save-btn">Save to Ledger</button></div>
             </form>
         </div>
     </div>
@@ -130,7 +131,7 @@
         const sb = window.supabase.createClient(CONFIG.URL, CONFIG.KEY);
         let isSignUp = false;
 
-        // AUTH HANDLERS
+        // AUTH
         document.getElementById('auth-toggle-link').onclick = (e) => {
             isSignUp = !isSignUp;
             document.getElementById('auth-title').innerText = isSignUp ? "Create Account" : "SelavuWatch";
@@ -173,7 +174,7 @@
         function closeModal() { document.getElementById('entry-modal').classList.remove('modal-active'); }
 
         async function deleteItem(id) {
-            if(!confirm("Are you sure you want to delete this entry?")) return;
+            if(!confirm("Permanently remove this entry?")) return;
             const { error } = await sb.from('credit_items').delete().eq('id', id);
             if(error) alert(error.message); else loadAll();
         }
@@ -185,7 +186,6 @@
             let totalSavings = 0, totalFriction = 0;
 
             if(data) data.forEach(item => {
-                // MATH: Total Paid = (EMI * Tenure) + Extra Fees
                 const totalEmiPayments = Number(item.emi_amount) * Number(item.tenure);
                 const interestWaste = Math.max(0, totalEmiPayments - Number(item.sticker_price));
                 const friction = Number(item.marketplace_fee) + Number(item.shipping_cost) + Number(item.gst_amount) + interestWaste;
@@ -201,14 +201,15 @@
                             <div class="icon-btn btn-delete" onclick="deleteItem('${item.id}')">🗑</div>
                             <div class="target-trigger">🎯</div>
                             <div class="tooltip">
+                                <strong>Start Date:</strong> ${item.start_date}<br>
                                 <strong>Interest Waste:</strong> ₹${interestWaste}<br>
                                 <strong>Fees & Taxes:</strong> ₹${Number(item.marketplace_fee) + Number(item.shipping_cost) + Number(item.gst_amount)}<br>
-                                <strong>Total Lost to Credit:</strong> ₹${friction}
+                                <strong>Total Lost:</strong> ₹${friction}
                             </div>
                         </div>
                         <h3 style="margin-bottom:0.5rem">${item.item_name}</h3>
                         <div class="amt" style="color:var(--primary)">₹${item.emi_amount}/mo</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted)">${item.tenure} Months Tenure</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted)">Started: ${item.start_date}</div>
                         ${friction > 0 ? `<div class="waste-tag">⚠ Total Friction: ₹${friction}</div>` : ''}
                     </article>
                 `;
